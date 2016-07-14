@@ -7,22 +7,25 @@
 // Ross Anderson, Eli Biham und Lars Knudsen.
 // The block cipher takes a 128, 192 or 256 bit key and
 // has a block size of 128 bit.
-package serpent
+package serpent // import "github.com/aead/serpent"
 
 import (
 	"crypto/cipher"
-
-	"github.com/enceve/crypto"
+	"errors"
 )
 
 // BlockSize is the serpent block size in bytes.
 const BlockSize = 16
 
+const phi = 0x9e3779b9 // The Serpent phi constant (sqrt(5) - 1) * 2**31
+
+var errKeySize = errors.New("invalid key size")
+
 // NewCipher returns a new cipher.Block implementing the serpent block cipher.
 // The key argument must be 128, 192 or 256 bit (16, 24, 32 byte).
 func NewCipher(key []byte) (cipher.Block, error) {
 	if k := len(key); k != 16 && k != 24 && k != 32 {
-		return nil, crypto.KeySizeError(k)
+		return nil, errKeySize
 	}
 	s := &subkeys{}
 	s.keySchedule(key)
@@ -53,8 +56,6 @@ func (s *subkeys) Decrypt(dst, src []byte) {
 	}
 	decryptBlock(dst, src, s)
 }
-
-const phi = 0x9e3779b9 // The Serpent phi constant (sqrt(5) - 1) * 2**31
 
 // The key schedule of serpent.
 func (s *subkeys) keySchedule(key []byte) {
